@@ -1,9 +1,11 @@
- function Player () {
+//var myPlayer = thePlayerName;
+var Player = function () {
 
     this.config = {
         theVideo: m.prop(),
+        theDims: m.prop({w: 400}),
         theUrl: m.prop(),
-        thePlugins:[]
+        thePlugins: []
     };
 
     this.init = function (element, isinit) {
@@ -11,15 +13,30 @@
         console.info(element)
     };
 
+// this function is
+    this.delayFunction = function () {
+        var self = this;
+        var deferred = m.deferred();
+        setTimeout(function () {
+            var theVid = self.config.theVideo();
+            deferred.resolve(theVid);
+        }, 2);
+        return deferred.promise;
+    };
+
     this.playIt = function () {
 
-        var theVid = this.config.theVideo();
+        this.delayFunction()
+            .then(function (theVid) {
+                console.log(theVid);
+                if (theVid.paused) {
+                    theVid.play()
+                } else {
+                    theVid.pause()
+                }
+            })
 
-        if (theVid.paused) {
-            theVid.play()
-        } else {
-            theVid.pause()
-        }
+
     };
 
     this.loadVideo = function (videoUrl) {
@@ -53,58 +70,67 @@
 
     this.view = function () {
         var self = this;
-
-        return [
-            m.component(theOverlays),
-            m("video",
+        var videoView = m("video",
+            {
+                controls: "controls",
+                height: this.config.theDims().h,
+                width: this.config.theDims().w,
+                config: function (element, isinit) {
+                    self.init(element, isinit)
+                }
+            },
+            m("source",
                 {
-                    controls: "controls",
-                    height: 250,
-                    config: function (element, isinit) {
-                        self.init(element, isinit)
-                    }
+                    src: "http://media.w3.org/2010/05/bunny/trailer.mp4",
+                    type: "video/mp4"
 
-                },
-                m("source",
-                    {
-                        src: "http://media.w3.org/2010/05/bunny/trailer.mp4",
-                        type: "video/mp4"
+                })
+        );
+        var volView = m('div', {
+            onclick: this.volumeVideo.bind(this, 0.1)
+        }, 'Vol +');
+        var theView = [videoView];
+        theView.push(volView);
 
-                    })
-            ),
-            m('div', {
-                onclick: this.playIt.bind(this)
-            }, 'play'),
-            m('div', {
-                onclick: this.loadVideo.bind(this, 'http://media.w3.org/2010/05/bunny/trailer.mp4')
-            }, 'Trailer'),
-            m('div', {
-                onclick: this.loadVideo.bind(this, 'http://media.w3.org/2010/05/bunny/movie.mp4')
-            }, 'Movie'),
-            m('div', {
-                onclick: this.skipVideo.bind(this, 0.1)
-            }, 'Speed +'),
-            m('div', {
-                onclick: this.volumeVideo.bind(this, 0.1)
-            }, 'Vol +')
-
-        ]
+        return [m(".video_container", {}, theView), m.component(theOverlays)];
     };
 
 };
- var theOverlays = {
-     controller: function(args) {
+var theOverlays = {
+    vm:{
+        self:m.prop(this)
+    },
+    playIt: function () {
+        theOverlays.vm.self().style.display="none"
+        console.log(theOverlays.vm.self().style)
+        myPlayer.playIt();
 
-     },
-     view: function(ctrl, args) {
+    },
 
-         return m("div", [
-             m("label", "Name"),
-             m("input", "Hello")
+    init: function (element, isinit) {
+        this.vm.self(element)
+    },
+    controller: function (args) {
 
-         ])
-     }
- }
+    },
+    view: function (ctrl, args) {
+        var self = this;
+        return m("div", [
+            m("img", {
+                src: 'assets/img/play_button.png', style: {
+                    position: "absolute",
+                    top: "0"
+
+                },
+                onclick: this.playIt,
+                config: function (element, isinit) {
+                    self.init(element, isinit)
+                }
+            })
+        ])
+    }
+}
+
 myPlayer = new Player();
 
 
