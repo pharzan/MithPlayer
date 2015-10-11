@@ -4,13 +4,8 @@ var Player = function () {
     this.config = {
         theVideo: m.prop(),
         theDims: m.prop({w: 400}),
-        theUrl: m.prop(),
+        theUrl: m.prop("http://media.w3.org/2010/05/bunny/trailer.mp4"),
         thePlugins: []
-    };
-
-    this.init = function (element, isinit) {
-        this.config.theVideo(element);
-        console.info(element)
     };
 
 // this function is
@@ -25,7 +20,6 @@ var Player = function () {
     };
 
     this.playIt = function () {
-
         this.delayFunction()
             .then(function (theVid) {
                 console.log(theVid);
@@ -37,9 +31,11 @@ var Player = function () {
             })
 
 
+
     };
 
     this.loadVideo = function (videoUrl) {
+
         if (videoUrl) {
             this.config.theUrl(videoUrl)
         } else {
@@ -49,15 +45,15 @@ var Player = function () {
         }
 
         var theVid = this.config.theVideo();
-
+//change the src of source not video as set in the tag
         theVid.src = this.config.theUrl();
         theVid.load();
         console.log('URL', videoUrl)
-
     };
 
     this.skipVideo = function (value) {
         var theVid = this.config.theVideo();
+        console.log(this.config.theVideo())
         theVid.currentTime += value;
     };
 
@@ -70,69 +66,79 @@ var Player = function () {
 
     this.view = function () {
         var self = this;
-        var videoView = m("video",
+        var videoView = [m("video",
             {
                 controls: "controls",
                 height: this.config.theDims().h,
                 width: this.config.theDims().w,
                 config: function (element, isinit) {
-                    self.init(element, isinit)
+                    self.config.theVideo(element);
                 }
             },
             m("source",
                 {
+                    //default should be somewhere else not here
                     src: "http://media.w3.org/2010/05/bunny/trailer.mp4",
                     type: "video/mp4"
-
                 })
-        );
+        ), m('div', {onclick: this.skipVideo.bind(this, 0.5)}, 'SKIP')];
         var volView = m('div', {
             onclick: this.volumeVideo.bind(this, 0.1)
         }, 'Vol +');
         var theView = [videoView];
-        theView.push(volView);
+        theView.push(volView, m.component(theOverlays, this));
 
-        return [m(".video_container", {}, theView), m.component(theOverlays)];
+        return [m(".video_container", {}, theView)];
+
     };
 
 };
 var theOverlays = {
-    vm:{
-        self:m.prop(this)
+
+    vm: {
+        self: m.prop(this)
     },
     playIt: function () {
-        theOverlays.vm.self().style.display="none"
-        console.log(theOverlays.vm.self().style)
-        myPlayer.playIt();
+        this.vm.self().style.display = "none";
+        console.log(this);
+        this.playIt();
 
     },
 
-    init: function (element, isinit) {
-        this.vm.self(element)
+    controller: function () {
     },
-    controller: function (args) {
-
-    },
-    view: function (ctrl, args) {
+    view: function (ctrl, parent) {
         var self = this;
+        console.log("parent:", parent);
         return m("div", [
             m("img", {
-                src: 'assets/img/play_button.png', style: {
+                src: 'assets/img/play_button.png',
+                style: {
                     position: "absolute",
                     top: "0"
-
                 },
-                onclick: this.playIt,
+                onclick: function(){
+                    console.log(this)
+                    parent.playIt.bind(parent)
+                },
                 config: function (element, isinit) {
-                    self.init(element, isinit)
+                    self.vm.self(element)
                 }
             })
         ])
     }
-}
+};
 
 myPlayer = new Player();
 
 
 //myPlayer.playIt();
 m.mount(document.body, myPlayer);
+/*
+ different sources : change files
+ access controls using api myPlayer.play() ....
+ add some plugins : overlay div
+
+
+
+ */
