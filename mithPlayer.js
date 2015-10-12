@@ -23,12 +23,12 @@ var Player = function () {
 
     this.thePlayerObj = m.prop();
 
-    this.timeUpdate = function (seekBarId) {
+   /* this.timeUpdate = function (seekBarId) {
         m.startComputation();
         this.state.time=this.thePlayerObj().currentTime;
         m.endComputation();
 
-    };
+    };*/
 
     this.playIt = function () {
         var me = this.thePlayerObj();
@@ -37,12 +37,11 @@ var Player = function () {
         if (me.paused) {
             this.state.playing = true;
             me.play();
-            seekBarId = setInterval(function () {
-
+            /*seekBarId = setInterval(function () {
                 self.timeUpdate(seekBarId);
-            }, 1);
+            }, 1);*/
         } else {
-            clearInterval(seekBarId);
+           /* clearInterval(seekBarId);*/
             this.state.playing = false;
             me.pause();
 
@@ -90,7 +89,10 @@ var Player = function () {
                         self.loadFromPlayList()
 
                     },
-                    onended: self.loadFromPlayList
+                    onended: self.loadFromPlayList,
+                    ontimeupdate:function(evt){
+                        self.state.time=self.thePlayerObj().currentTime;
+                    }
 
                 },
                 m("source",
@@ -137,7 +139,7 @@ var overlayControls = {
             pauseDimensions: {h: "25px", w: "25px"}
         };
 
-        return m('btns',
+        return m('.btns',
             m("div.playBtn",
                 {
                     width: parent.config.dimensions.w,
@@ -176,7 +178,7 @@ var overlayControls = {
                     onclick: parent.playIt.bind(parent)
                 }
             ),
-            m('.seek',{onclick:function(){console.log(parent.thePlayerObj().currentTime)}},parent.state.time)
+            m('.seek',parent.state.time)
         )
     }
 };
