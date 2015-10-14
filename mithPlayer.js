@@ -18,34 +18,46 @@ var Player = function () {
         playing: false,
         finished: false,
         fileIdx: 0,
-        time:0
+        time: 0,
+        duration: 0,
+        speed: 0,
+        vol: 1
     };
 
     this.thePlayerObj = m.prop();
 
-   /* this.timeUpdate = function (seekBarId) {
-        m.startComputation();
-        this.state.time=this.thePlayerObj().currentTime;
-        m.endComputation();
-
-    };*/
-
     this.playIt = function () {
         var me = this.thePlayerObj();
-        var self = this;
 
         if (me.paused) {
             this.state.playing = true;
             me.play();
-            /*seekBarId = setInterval(function () {
-                self.timeUpdate(seekBarId);
-            }, 1);*/
         } else {
-           /* clearInterval(seekBarId);*/
             this.state.playing = false;
             me.pause();
+        }
+    };
 
+    this.seek = function (time) {
+        var self = this;
+        self.thePlayerObj().currentTime = time;
+        self.playIt()
+    };
 
+    this.speed = function (speed) {
+        var self = this;
+        self.thePlayerObj().playbackRate = speed
+    };
+
+    this.volume = function (v) {
+        var self = this;
+        if (v == 1 && self.state.vol < 1) {
+            self.state.vol = self.state.vol + 0.1;
+            self.thePlayerObj().volume = self.state.vol
+        }
+        if (v == -1 && self.state.vol > 0.1) {
+            self.state.vol = self.state.vol - 0.1;
+            self.thePlayerObj().volume = self.state.vol
         }
     };
 
@@ -72,11 +84,12 @@ var Player = function () {
         var videoView = [
             m("video",
                 {
-                    controls: 'controls',
+
                     height: self.config.dimensions.h,
                     width: self.config.dimensions.w,
                     oncanplay: function () {
                         if (self.config.autoPlay) {
+                            self.state.duration = self.thePlayerObj().duration
                             self.playIt()
                         }
                     },
@@ -90,8 +103,8 @@ var Player = function () {
 
                     },
                     onended: self.loadFromPlayList,
-                    ontimeupdate:function(evt){
-                        self.state.time=self.thePlayerObj().currentTime;
+                    ontimeupdate: function (evt) {
+                        self.state.time = self.thePlayerObj().currentTime;
                     }
 
                 },
@@ -99,7 +112,8 @@ var Player = function () {
                     {
                         src: '',
                         type: "video/mp4"
-                    })
+                    }
+                )
             )
         ];
 
@@ -163,7 +177,7 @@ var overlayControls = {
             ),
             m('.pauseBtn', {
                     style: {
-                        opacity: .5,
+                        opacity: 1,
                         position: "absolute",
                         left: "5px",
                         bottom: "5px",
@@ -178,8 +192,80 @@ var overlayControls = {
                     onclick: parent.playIt.bind(parent)
                 }
             ),
-            m('.seek',parent.state.time)
+            m('progress', {
+                    max: Math.floor(parent.state.duration),
+                    value: Math.floor(parent.state.time),
+                    style: {
+                        left: "35px",
+                        position: "absolute",
+                        bottom: "5px",
+                        background: "#fff",
+                        color: "red",
+                        width: "50%"
+                    },
+                    onclick: function (e) {
+                        var clickedTime = ((e.pageX - this.offsetLeft) * parent.state.duration) / e.target.offsetWidth;
+                        parent.seek(clickedTime);
+                    }
+                }
+            ),
+            m('span', {
+                style: {
+                    position: 'absolute',
+                    color: "white",
+                    bottom: "5px",
+                    left: "60%"
+                },
+                onclick: function () {
+                    parent.speed(0.5);
+                }
+            }, '<<'),
+            m('span', {
+                style: {
+                    position: 'absolute',
+                    color: "white",
+                    bottom: "5px",
+                    left: "65%"
+                },
+                onclick: function () {
+                    parent.speed(1.0);
+                }
+            }, '--'),
+            m('span', {
+                style: {
+                    position: 'absolute',
+                    color: "white",
+                    bottom: "5px",
+                    left: "70%"
+                },
+                onclick: function () {
+                    parent.speed(2);
+                }
+            }, '>>'),
+            m('span', {
+                style: {
+                    position: 'absolute',
+                    color: "white",
+                    bottom: "5px",
+                    left: "75%"
+                },
+                onclick: function () {
+                    parent.volume(1)
+                }
+            }, '++'),
+            m('span', {
+                style: {
+                    position: 'absolute',
+                    color: "white",
+                    bottom: "5px",
+                    left: "80%"
+                },
+                onclick: function () {
+                    parent.volume(-1)
+                }
+            }, '--')
         )
+
     }
 };
 
