@@ -1,19 +1,16 @@
-/*
- The Player
- */
 var Player = function () {
-
+    var self=this;
     this.config = {
         dimensions: {w: "400px", h: "225px"},
         autoPlay: true,
         playList: [
-            'file://C:/wamp/www/mithPlayer/videos/trailer.mp4',
-            'file://C:/wamp/www/mithPlayer/videos/bunny.mp4',
-            'file://C:/wamp/www/mithPlayer/videos/starwars.mp4'
+            './videos/bunny.mp4',
         ],
         loop: true
     };
 
+    this.plugins=[];
+    
     this.state = {
         playing: false,
         finished: false,
@@ -24,10 +21,10 @@ var Player = function () {
         vol: 1
     };
 
-    this.thePlayerObj = m.prop();
+  //  this.videoElement = m.prop();
 
     this.playIt = function () {
-        var me = this.thePlayerObj();
+        var me = this.videoElement;
 
         if (me.paused) {
             this.state.playing = true;
@@ -37,99 +34,100 @@ var Player = function () {
             me.pause();
         }
     };
-
+    
     this.seek = function (time) {
         var self = this;
-        self.thePlayerObj().currentTime = time;
-        self.playIt()
+        self.videoElement.currentTime = time;
+        self.playIt();
     };
 
     this.speed = function (speed) {
         var self = this;
-        self.thePlayerObj().playbackRate = speed
+        self.videoElement.playbackRate = speed;
     };
 
     this.volume = function (v) {
         var self = this;
         if (v == 1 && self.state.vol < 1) {
             self.state.vol = self.state.vol + 0.1;
-            self.thePlayerObj().volume = self.state.vol
+            self.videoElement.volume = self.state.vol;
         }
         if (v == -1 && self.state.vol > 0.1) {
             self.state.vol = self.state.vol - 0.1;
-            self.thePlayerObj().volume = self.state.vol
+            self.videoElement.volume = self.state.vol;
         }
     };
 
     this.loadFromPlayList = function () {
 
-        var me = this.thePlayerObj();
         var config = this.config;
         var fileIdx = this.state.fileIdx;
         this.state.fileIdx++;
 
         if (config.playList[fileIdx]) {
-            me.src = config.playList[fileIdx];
-            me.load();
+            this.videoElement.src = config.playList[fileIdx];
+            this.videoElement.load();
 
         }
         else if (config.loop && fileIdx == config.playList.length) {
             this.state.fileIdx = 0;
-            this.loadFromPlayList()
+            this.loadFromPlayList();
         }
 
-    }.bind(this);
-    this.view = function () {
+    };
+
+    this.controller=function(){
+	self.plugins.push(overlayControls);
+	self.plugins.push(overlaySubtitle);
+    };
+    
+    this.view = function (ctrl) {
         var self = this;
-        var videoView = [
-            m("video",
-                {
-
-                    height: self.config.dimensions.h,
+        return [
+	    m('.videoContainer', {
+		height: self.config.dimensions.h,
+		width: self.config.dimensions.w,
+		style: {
+                    position: "relative",
                     width: self.config.dimensions.w,
-                    oncanplay: function () {
-                        if (self.config.autoPlay) {
-                            self.state.duration = self.thePlayerObj().duration
-                            self.playIt()
-                        }
-                    },
-                    config: function (element, isinit) {
-                        if (isinit) {
-                            return
-                        }
-                        self.thePlayerObj(element);
-
-                        self.loadFromPlayList()
-
-                    },
-                    onended: self.loadFromPlayList,
-                    ontimeupdate: function (evt) {
-                        self.state.time = self.thePlayerObj().currentTime;
-                    }
-
-                },
-                m("source",
+                    height: self.config.dimensions.h
+		}
+            },
+	      m("video",
                     {
-                        src: '',
-                        type: "video/mp4"
-                    }
-                )
-            )
-        ];
+			height: self.config.dimensions.h,
+			width: self.config.dimensions.w,
+			oncanplay: function () {
+                            if (self.config.autoPlay) {
+				self.state.duration = self.videoElement.duration;
+				self.playIt();
+                            }
+			},
+			config: function (element, isinit) {
+                            if (isinit) {
+				return;
+                            }
+                            self.videoElement=element;
 
-        videoView.push(m.component(overlayControls, self));
+                            self.loadFromPlayList();
 
-        return [m('.videoContainer', {
+			},
+			onended: self.loadFromPlayList,
+			ontimeupdate: function (evt) {
+                            self.state.time = self.videoElement.currentTime;
+			}
 
-            height: self.config.dimensions.h,
-            width: self.config.dimensions.w,
-            style: {
-                position: "relative",
-                width: self.config.dimensions.w,
-                height: self.config.dimensions.h
-            }
-        }, videoView)]
-    }
+                    },
+                    m("source",
+                      {
+                          src: '',
+                          type: "video/mp4"
+                      }
+                     )
+	       ),self.plugins.map(function(plugin){
+		   return m.component(plugin,self);
+	       }))];
+    };
 };
 
 /*
@@ -147,9 +145,9 @@ var overlayControls = {
         var self = this;
 
         this.controlsConfig = {
-            playUrl: "url('file://C:/wamp/www/mithPlayer/assets/img/playBtn.png')",
+            playUrl: "url('icons/play.png')",
             playDimensions: {h: "100px", w: "100px"},
-            pauseUrl: "url('file://C:/wamp/www/mithPlayer/assets/img/pauseBtn.png')",
+            pauseUrl: "url('icons/pause.png')",
             pauseDimensions: {h: "25px", w: "25px"}
         };
 
@@ -199,7 +197,7 @@ var overlayControls = {
                         left: "35px",
                         position: "absolute",
                         bottom: "5px",
-                        background: "#fff",
+                        background: "black",
                         color: "red",
                         width: "50%"
                     },
@@ -266,6 +264,44 @@ var overlayControls = {
             }, '--')
         )
 
+    }
+};
+
+var subtitles={
+    0:{
+	start:1,
+	end:10,
+	caption:'first subtitle'
+    },
+    
+    2:{
+	start:20,
+	end:30,
+	caption:'third one'
+    }
+
+};
+
+var overlaySubtitle={
+    controller:function(){
+	this.subIdxs=Object.keys(subtitles);
+	
+
+    },
+    view:function(ctrl,parent){
+	var self=this;
+	console.log(parent.state.time)
+	ctrl.subIdxs.map(function(subIdx){
+	    
+	    if(self._isInBetween(parent.state.time,subtitles[subIdx].start,subtitles[subIdx].end) )
+		self.currentSub=subtitles[subIdx].caption;
+	    
+	})
+	
+	return m('',this.currentSub);
+    },
+    _isInBetween:function(x,min,max){
+	return x >= min && x <= max;
     }
 };
 
