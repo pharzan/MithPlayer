@@ -5,6 +5,8 @@ var Player = function () {
         autoPlay: true,
         playList: [
             './videos/bunny.mp4',
+            './videos/lego.mp4',
+            './videos/happyfit2.mp4'
         ],
         loop: true
     };
@@ -23,7 +25,7 @@ var Player = function () {
 
   //  this.videoElement = m.prop();
 
-    this.playIt = function () {
+    this.playToggle = function () {
         var me = this.videoElement;
 
         if (me.paused) {
@@ -38,7 +40,7 @@ var Player = function () {
     this.seek = function (time) {
         var self = this;
         self.videoElement.currentTime = time;
-        self.playIt();
+        self.playToggle();
     };
 
     this.speed = function (speed) {
@@ -59,19 +61,18 @@ var Player = function () {
     };
 
     this.loadFromPlayList = function () {
-
-        var config = this.config;
-        var fileIdx = this.state.fileIdx;
-        this.state.fileIdx++;
-
-        if (config.playList[fileIdx]) {
-            this.videoElement.src = config.playList[fileIdx];
-            this.videoElement.load();
-
+	
+        var config = self.config;
+        var fileIdx = self.state.fileIdx;
+	
+	self.state.fileIdx++;
+        if (typeof config.playList[fileIdx]!=='undefined') {
+            self.videoElement.src = self.config.playList[fileIdx];
+            self.videoElement.load();
         }
         else if (config.loop && fileIdx == config.playList.length) {
-            this.state.fileIdx = 0;
-            this.loadFromPlayList();
+            self.state.fileIdx = 0;
+            self.loadFromPlayList();
         }
 
     };
@@ -83,7 +84,7 @@ var Player = function () {
     
     this.view = function (ctrl) {
         var self = this;
-        return [
+        return m('',
 	    m('.videoContainer', {
 		height: self.config.dimensions.h,
 		width: self.config.dimensions.w,
@@ -100,7 +101,7 @@ var Player = function () {
 			oncanplay: function () {
                             if (self.config.autoPlay) {
 				self.state.duration = self.videoElement.duration;
-				self.playIt();
+				self.playToggle();
                             }
 			},
 			config: function (element, isinit) {
@@ -126,7 +127,7 @@ var Player = function () {
                      )
 	       ),self.plugins.map(function(plugin){
 		   return m.component(plugin,self);
-	       }))];
+	       })));
     };
 };
 
@@ -137,7 +138,7 @@ var overlayControls = {
 
     overlayPlay: function (parent) {
 
-        parent.playIt()
+        parent.playToggle()
     },
     controller: function () {
     },
@@ -148,6 +149,9 @@ var overlayControls = {
             playUrl: "url('icons/play.png')",
             playDimensions: {h: "100px", w: "100px"},
             pauseUrl: "url('icons/pause.png')",
+	    ffUrl:"url('icons/ff.png')",
+	    volUp:"url('icons/vup.png')",
+	    volDown:"url('icons/vdown.png')",
             pauseDimensions: {h: "25px", w: "25px"}
         };
 
@@ -172,7 +176,8 @@ var overlayControls = {
                         self.overlayPlay(parent)
                     }
                 }
-            ),
+             ),
+		 m('.bottomLayer',
             m('.pauseBtn', {
                     style: {
                         opacity: 1,
@@ -187,7 +192,7 @@ var overlayControls = {
                         display: parent.state.playing ? "block" : "none",
                         backgroundSize: "cover"
                     },
-                    onclick: parent.playIt.bind(parent)
+                    onclick: parent.playToggle.bind(parent)
                 }
             ),
             m('progress', {
@@ -234,34 +239,51 @@ var overlayControls = {
                     position: 'absolute',
                     color: "white",
                     bottom: "5px",
-                    left: "70%"
+                    left: "70%",
+		    backgroundImage:this.controlsConfig.ffUrl,
+		    backgroundSize: "contain",
+		    backgroundRepeat: "no-repeat",
+		    width: "20px",
+		    height: "20px"
+		    
                 },
                 onclick: function () {
                     parent.speed(2);
                 }
-            }, '>>'),
+            }),
             m('span', {
                 style: {
                     position: 'absolute',
                     color: "white",
                     bottom: "5px",
-                    left: "75%"
+                    left: "75%",
+		    backgroundImage:this.controlsConfig.volUp,
+		    backgroundSize: "contain",
+		    backgroundRepeat: "no-repeat",
+		    width: "20px",
+		    height: "20px"
                 },
                 onclick: function () {
                     parent.volume(1)
                 }
-            }, '++'),
+            }),
             m('span', {
                 style: {
                     position: 'absolute',
                     color: "white",
                     bottom: "5px",
-                    left: "80%"
+                    left: "80%",
+		    backgroundImage:this.controlsConfig.volDown,
+		    backgroundSize: "contain",
+		    backgroundRepeat: "no-repeat",
+		    width: "20px",
+		    height: "20px"
+		    
                 },
                 onclick: function () {
                     parent.volume(-1)
                 }
-            }, '--')
+            }))
         )
 
     }
@@ -283,27 +305,45 @@ var subtitles={
 };
 
 var overlaySubtitle={
+    
     controller:function(){
 	this.subIdxs=Object.keys(subtitles);
 	
 
     },
+    
     view:function(ctrl,parent){
 	var self=this;
-	console.log(parent.state.time)
+	
 	ctrl.subIdxs.map(function(subIdx){
 	    
-	    if(self._isInBetween(parent.state.time,subtitles[subIdx].start,subtitles[subIdx].end) )
+	    if(self._isInBetween(parent.state.time,subtitles[subIdx].start,subtitles[subIdx].end))
 		self.currentSub=subtitles[subIdx].caption;
-	    
-	})
+	    else if(parent.state.time >= subtitles[subIdx].start )
+		self.currentSub='';
+	});
 	
-	return m('',this.currentSub);
+	return m('.subtitle',this.currentSub);
     },
     _isInBetween:function(x,min,max){
 	return x >= min && x <= max;
     }
 };
 
-myPlayer = new Player();
-m.mount(document.body, myPlayer);
+var myPlayer = new Player();
+
+var main={
+    view:function(){
+	return [m('',
+		 m.component(myPlayer)
+		 
+		 ),m('.demo',
+		     m('button',{onclick(){
+		     myPlayer.playToggle();
+		     }},'play/stop')),
+		m('span','current Time: ',m('span',myPlayer.state.time))
+	       ]
+    }
+}
+
+m.mount(document.body, main);
