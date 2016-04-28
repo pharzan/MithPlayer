@@ -2,7 +2,7 @@ var Player = function () {
     var self=this;
     this.config = {
         dimensions: {//w: "300px", h: "225px",
-		     w:300,h:225
+		     w:375,h:225
 		    },
         autoPlay: true,
         playList: [
@@ -85,6 +85,24 @@ var Player = function () {
             self.videoElement.volume = self.state.vol;
         }
     };
+
+    this.setVolume = function (v) {
+        var self = this;
+        if(v>1)
+	    v=1;
+	if (v<0)
+	    v=0;
+	
+        self.videoElement.volume = v;
+        
+        
+    };
+
+    this.sizeChange=function(h,w){
+
+	this.config.dimensions.h=h;
+	this.config.dimensions.w=w;
+    }
 
     this.loadFromPlayList = function () {
 	
@@ -176,9 +194,10 @@ var overlayControls = {
 	    volDown:"url('icons/vdown.png')",
 	    mute:"url('icons/mute.png')",
 	    speedToggle:"url('icons/snail.png')",
+	    resizeBigger:"url('icons/resize.png')",
             pauseDimensions: {h: "25px", w: "25px"}
         };
-	console.log( parent.config.dimensions.w)
+	
         return m('.btns',
             m("div.playBtn",
                 {
@@ -220,7 +239,14 @@ var overlayControls = {
                     },
                     onclick: parent.playToggle.bind(parent)
                 }
-            ),
+             ),m('.outer',{onclick:function(e){
+		 
+		 var v=(e.pageY -this.offsetTop);
+		 console.log(v,e)
+		 parent.setVolume(v/100)
+	     }}
+		),
+		 
             m('progress', {
                     max: Math.floor(parent.state.duration),
                     value: Math.floor(parent.state.time),
@@ -261,7 +287,7 @@ var overlayControls = {
                     color: "white",
                     bottom: "5px",
                     left: "70%",
-		    backgroundImage:this.controlsConfig.ffUrl,
+		    backgroundImage:this.controlsConfig.resizeBigger,
 		    backgroundSize: "contain",
 		    backgroundRepeat: "no-repeat",
 		    width: "20px",
@@ -269,48 +295,21 @@ var overlayControls = {
 		    
                 },
                 onclick: function () {
-                    parent.speed(2);
-                }
-            }),
-            m('span', {
-                style: {
-                    position: 'absolute',
-                    color: "white",
-                    bottom: "5px",
-                    left: "75%",
-		    backgroundImage:this.controlsConfig.volUp,
-		    backgroundSize: "contain",
-		    backgroundRepeat: "no-repeat",
-		    width: "20px",
-		    height: "20px"
-                },
-                onclick: function () {
-                    parent.volume(1)
-                }
-            }),
-            m('span', {
-                style: {
-                    position: 'absolute',
-                    color: "white",
-                    bottom: "5px",
-                    left: "80%",
-		    backgroundImage:this.controlsConfig.volDown,
-		    backgroundSize: "contain",
-		    backgroundRepeat: "no-repeat",
-		    width: "20px",
-		    height: "20px"
+		    var h=50,w=150;
 		    
-                },
-                onclick: function () {
-                    parent.volume(-1)
+		    if(parent.config.dimensions.h==225)
+			parent.sizeChange(300,500);
+		    else
+			parent.sizeChange(225,375);
                 }
             }),
+            
             m('span', {
                 style: {
                     position: 'absolute',
                     color: "white",
                     bottom: "5px",
-                    left: "87%",
+                    left: "78%",
 		    backgroundImage:this.controlsConfig.mute,
 		    backgroundSize: "contain",
 		    backgroundRepeat: "no-repeat",
