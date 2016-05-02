@@ -22,7 +22,7 @@ var Player = function () {
         time: 0,
         duration: 0,
         speed: 1,
-        vol: 1,
+        volume: 25,
 	currentPlaying:'',
 	mute:false
     };
@@ -102,13 +102,13 @@ var Player = function () {
 
 	this.config.dimensions.h=h;
 	this.config.dimensions.w=w;
-    }
+    };
 
     this.loadFromPlayList = function () {
 	
         var config = self.config;
         var fileIdx = self.state.fileIdx;
-	
+	this.setVolume(this.state.volume);
 	self.state.fileIdx++;
         if (typeof config.playList[fileIdx]!=='undefined') {
             self.videoElement.src = self.config.playList[fileIdx];
@@ -124,6 +124,7 @@ var Player = function () {
     };
 
     this.controller=function(){
+	
 	 self.plugins.push(overlayControls);
 	//self.plugins.push(overlaySubtitle);
     };
@@ -242,9 +243,13 @@ var overlayControls = {
              ),m('.outer',{onclick:function(e){
 		 //calculate percentage of clicked volume
 		 var v=((this.getClientRects()[0].bottom-e.pageY)*100)/57;
+		 parent.state.volume=v;
 		 parent.setVolume(v/100);
-	     }}
-		),
+	     }},m('.inner',{style:{
+		 height: parent.state.volume+"%",
+		 background: "red"
+	     }})
+		 ),
 		 
             m('progress', {
                     max: Math.floor(parent.state.duration),
