@@ -240,10 +240,9 @@ var overlayControls = {
                     onclick: parent.playToggle.bind(parent)
                 }
              ),m('.outer',{onclick:function(e){
-		 
-		 var v=(e.pageY -this.offsetTop);
-		 console.log(v,e)
-		 parent.setVolume(v/100)
+		 //calculate percentage of clicked volume
+		 var v=((this.getClientRects()[0].bottom-e.pageY)*100)/57;
+		 parent.setVolume(v/100);
 	     }}
 		),
 		 
@@ -318,12 +317,12 @@ var overlayControls = {
 		    
                 },
                 onclick: function () {
-                    parent.mute()
+                    parent.mute();
                 }
             })
 
 		  )
-        )
+		);
 
     }
 };
